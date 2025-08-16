@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$_DIR/../config"
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/property-functions"
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
+
+fn-in-array-with-wildcard() {
+  declare desc="return true if value ($1) is in list (all other arguments) with wildcard support"
+  local needle=$1
+  local e
+  for e in "${@:2}"; do
+    if [[ "$e" == *"*"* ]]; then
+      # Convert wildcard pattern to regex pattern
+      local pattern="^${e//\*/.*}$"
+      if [[ "$needle" =~ $pattern ]]; then
+        return 0
+      fi
+    elif [[ "$e" == "$needle" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+cmd-nginx-path-set() {
+  declare desc="set or clear an nginx property for an app"
+  declare cmd="nginx-path:set"
+  [[ "$1" == "$cmd" ]] && shift 1
+  declare APP="$1" KEY="$2" VALUE="$3"
+  local VALID_KEYS=("access-log-format" "access-log-path" "bind-address-ipv4" "bind-address-ipv6" "client-body-timeout" "client-header-timeout" "client-max-body-size" "disable-custom-config" "error-log-path" "hsts" "hsts-include-subdomains" "hsts-preload" "hsts-max-age" "keepalive-timeout" "lingering-timeout" "nginx-conf-location-sigil-path" "nginx-conf-location-sigil-path-*" "nginx-conf-server-block-sigil-path" "nginx-conf-server-block-sigil-path-*" "nginx-conf-http-block-sigil-path" "nginx-conf-http-block-sigil-path-*" "proxy-buffer-size" "proxy-buffering" "proxy-buffers" "proxy-busy-buffers-size" "proxy-connect-timeout" "proxy-read-timeout" "proxy-send-timeout" "send-timeout" "underscore-in-headers" "x-forwarded-for-value" "x-forwarded-port-value" "x-forwarded-proto-value" "x-forwarded-ssl")
+  local GLOBAL_KEYS=("access-log-format" "access-log-path" "bind-address-ipv4" "bind-address-ipv6" "client-body-timeout" "client-header-timeout" "client-max-body-size" "disable-custom-config" "error-log-path" "hsts-include-subdomains" "hsts-max-age" "hsts-preload" "hsts" "keepalive-timeout" "lingering-timeout" "nginx-conf-location-sigil-path" "nginx-conf-location-sigil-path-*" "nginx-conf-server-block-sigil-path" "nginx-conf-server-block-sigil-path-*" "nginx-conf-http-block-sigil-path" "nginx-conf-http-block-sigil-path-*" "proxy-buffer-size" "proxy-buffering" "proxy-buffers" "proxy-busy-buffers-size" "proxy-connect-timeout" "proxy-read-timeout" "proxy-send-timeout" "send-timeout" "underscore-in-headers" "x-forwarded-for-value" "x-forwarded-port-value" "x-forwarded-proto-value" "x-forwarded-ssl")
+  [[ -z "$KEY" ]] && dokku_log_fail "No key specified"
+
+  if ! fn-in-array-with-wildcard "$KEY" "${VALID_KEYS[@]}"; then
+    dokku_log_fail "Invalid key specified, valid keys include: access-log-format, access-log-path, bind-address-ipv4, bind-address-ipv6, client-body-timeout, client-header-timeout, client-max-body-size, disable-custom-config, error-log-path, hsts, hsts-include-subdomains, hsts-preload, hsts-max-age, keepalive-timeout, lingering-timeout, nginx-path-location-conf-sigil-path, proxy-buffer-size, proxy-buffering, proxy-buffers, proxy-busy-buffers-size, proxy-connect-timeout, proxy-read-timeout, proxy-send-timeout, send-timeout, underscore-in-headers, x-forwarded-for-value, x-forwarded-port-value, x-forwarded-proto-value, x-forwarded-ssl"
+  fi
+
+  if ! fn-in-array-with-wildcard "$KEY" "${GLOBAL_KEYS[@]}"; then
+    if [[ "$APP" == "--global" ]]; then
+      dokku_log_fail "The key '$KEY' cannot be set globally"
+    fi
+  fi
+
+  verify_app_name "$APP"
+
+  if [[ -n "$VALUE" ]]; then
+    dokku_log_info2_quiet "Setting ${KEY} to ${VALUE}"
+    fn-plugin-property-write "$PROXY_NAME" "$APP" "$KEY" "$VALUE"
+  else
+    dokku_log_info2_quiet "Unsetting ${KEY}"
+    fn-plugin-property-delete "$PROXY_NAME" "$APP" "$KEY"
+  fi
+}
+
+cmd-nginx-path-set "$@"

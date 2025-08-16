@@ -1,0 +1,211 @@
+#!/usr/bin/env bash
+set -eo pipefail
+[[ $DOKKU_TRACE ]] && set -x
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
+source "$PLUGIN_CORE_AVAILABLE_PATH/common/property-functions"
+_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$_DIR/functions"
+source "$_DIR/internal-functions"
+
+cmd-nginx-path-report() {
+  declare desc="displays a nginx report for one or more apps"
+  declare cmd="nginx-path:report"
+  [[ "$1" == "$cmd" ]] && shift 1
+  declare APP="$1" INFO_FLAG="$2"
+
+  if [[ -n "$APP" ]] && [[ "$APP" == --* ]]; then
+    INFO_FLAG="$APP"
+    APP=""
+  fi
+
+  if [[ -z "$APP" ]] && [[ -z "$INFO_FLAG" ]]; then
+    INFO_FLAG="true"
+  fi
+
+  if [[ -z "$APP" ]]; then
+    for app in $(dokku_apps); do
+      cmd-nginx-path-report-single "$app" "$INFO_FLAG" | tee || true
+    done
+  else
+    cmd-nginx-path-report-single "$APP" "$INFO_FLAG"
+  fi
+}
+
+cmd-nginx-path-report-single() {
+  declare APP="$1" INFO_FLAG="$2"
+  if [[ "$INFO_FLAG" == "true" ]]; then
+    INFO_FLAG=""
+  fi
+  verify_app_name "$APP"
+  local flag_map=(
+    "--nginx-path-access-log-format: $(fn-nginx-path-access-log-format "$APP")"
+    "--nginx-path-computed-access-log-format: $(fn-nginx-path-computed-access-log-format "$APP")"
+    "--nginx-path-global-access-log-format: $(fn-nginx-path-global-access-log-format "$APP")"
+    "--nginx-path-access-log-path: $(fn-nginx-path-access-log-path "$APP")"
+    "--nginx-path-computed-access-log-path: $(fn-nginx-path-computed-access-log-path "$APP")"
+    "--nginx-path-global-access-log-path: $(fn-nginx-path-global-access-log-path "$APP")"
+    "--nginx-path-bind-address-ipv4: $(fn-nginx-path-bind-address-ipv4 "$APP")"
+    "--nginx-path-computed-bind-address-ipv4: $(fn-nginx-path-computed-bind-address-ipv4 "$APP")"
+    "--nginx-path-global-bind-address-ipv4: $(fn-nginx-path-global-bind-address-ipv4 "$APP")"
+    "--nginx-path-bind-address-ipv6: $(fn-nginx-path-bind-address-ipv6 "$APP")"
+    "--nginx-path-computed-bind-address-ipv6: $(fn-nginx-path-computed-bind-address-ipv6 "$APP")"
+    "--nginx-path-global-bind-address-ipv6: $(fn-nginx-path-global-bind-address-ipv6 "$APP")"
+    "--nginx-path-client-body-timeout: $(fn-nginx-path-client-body-timeout "$APP")"
+    "--nginx-path-computed-client-body-timeout: $(fn-nginx-path-computed-client-body-timeout "$APP")"
+    "--nginx-path-global-client-body-timeout: $(fn-nginx-path-global-client-body-timeout "$APP")"
+    "--nginx-path-client-header-timeout: $(fn-nginx-path-client-header-timeout "$APP")"
+    "--nginx-path-computed-client-header-timeout: $(fn-nginx-path-computed-client-header-timeout "$APP")"
+    "--nginx-path-global-client-header-timeout: $(fn-nginx-path-global-client-header-timeout "$APP")"
+    "--nginx-path-client-max-body-size: $(fn-nginx-path-client-max-body-size "$APP")"
+    "--nginx-path-computed-client-max-body-size: $(fn-nginx-path-computed-client-max-body-size "$APP")"
+    "--nginx-path-global-client-max-body-size: $(fn-nginx-path-global-client-max-body-size "$APP")"
+    "--nginx-path-disable-custom-config: $(fn-nginx-path-disable-custom-config "$APP")"
+    "--nginx-path-computed-disable-custom-config: $(fn-nginx-path-computed-disable-custom-config "$APP")"
+    "--nginx-path-global-disable-custom-config: $(fn-nginx-path-global-disable-custom-config "$APP")"
+    "--nginx-path-error-log-path: $(fn-nginx-path-error-log-path "$APP")"
+    "--nginx-path-computed-error-log-path: $(fn-nginx-path-computed-error-log-path "$APP")"
+    "--nginx-path-global-error-log-path: $(fn-nginx-path-global-error-log-path "$APP")"
+    "--nginx-path-hsts-include-subdomains: $(fn-nginx-path-hsts-include-subdomains "$APP")"
+    "--nginx-path-computed-hsts-include-subdomains: $(fn-nginx-path-computed-hsts-include-subdomains "$APP")"
+    "--nginx-path-global-hsts-include-subdomains: $(fn-nginx-path-global-hsts-include-subdomains "$APP")"
+    "--nginx-path-hsts-max-age: $(fn-nginx-path-hsts-max-age "$APP")"
+    "--nginx-path-computed-hsts-max-age: $(fn-nginx-path-computed-hsts-max-age "$APP")"
+    "--nginx-path-global-hsts-max-age: $(fn-nginx-path-global-hsts-max-age "$APP")"
+    "--nginx-path-hsts-preload: $(fn-nginx-path-hsts-preload "$APP")"
+    "--nginx-path-computed-hsts-preload: $(fn-nginx-path-computed-hsts-preload "$APP")"
+    "--nginx-path-global-hsts-preload: $(fn-nginx-path-global-hsts-preload "$APP")"
+    "--nginx-path-hsts: $(fn-nginx-path-hsts "$APP")"
+    "--nginx-path-computed-hsts: $(fn-nginx-path-computed-hsts "$APP")"
+    "--nginx-path-global-hsts: $(fn-nginx-path-global-hsts "$APP")"
+    "--nginx-path-last-visited-at: $(fn-nginx-path-vhosts-last-visited-at "$APP")"
+    "--nginx-path-keepalive-timeout: $(fn-nginx-path-keepalive-timeout "$APP")"
+    "--nginx-path-computed-keepalive-timeout: $(fn-nginx-path-computed-keepalive-timeout "$APP")"
+    "--nginx-path-global-keepalive-timeout: $(fn-nginx-path-global-keepalive-timeout "$APP")"
+    "--nginx-path-lingering-timeout: $(fn-nginx-path-lingering-timeout "$APP")"
+    "--nginx-path-computed-lingering-timeout: $(fn-nginx-path-computed-lingering-timeout "$APP")"
+    "--nginx-path-global-lingering-timeout: $(fn-nginx-path-global-lingering-timeout "$APP")"
+    "--nginx-path-nginx-path-location-conf-sigil-path: $(fn-nginx-path-nginx-path-location-conf-sigil-path "$APP")"
+    "--nginx-path-computed-nginx-path-location-conf-sigil-path: $(fn-nginx-path-computed-nginx-path-location-conf-sigil-path "$APP")"
+    "--nginx-path-global-nginx-path-location-conf-sigil-path: $(fn-nginx-path-global-nginx-path-location-conf-sigil-path "$APP")"
+    "--nginx-path-proxy-buffer-size: $(fn-nginx-path-proxy-buffer-size "$APP")"
+    "--nginx-path-computed-proxy-buffer-size: $(fn-nginx-path-computed-proxy-buffer-size "$APP")"
+    "--nginx-path-global-proxy-buffer-size: $(fn-nginx-path-global-proxy-buffer-size "$APP")"
+    "--nginx-path-proxy-buffering: $(fn-nginx-path-proxy-buffering "$APP")"
+    "--nginx-path-computed-proxy-buffering: $(fn-nginx-path-computed-proxy-buffering "$APP")"
+    "--nginx-path-global-proxy-buffering: $(fn-nginx-path-global-proxy-buffering "$APP")"
+    "--nginx-path-proxy-buffers: $(fn-nginx-path-proxy-buffers "$APP")"
+    "--nginx-path-computed-proxy-buffers: $(fn-nginx-path-computed-proxy-buffers "$APP")"
+    "--nginx-path-global-proxy-buffers: $(fn-nginx-path-global-proxy-buffers "$APP")"
+    "--nginx-path-proxy-busy-buffers-size: $(fn-nginx-path-proxy-busy-buffers-size "$APP")"
+    "--nginx-path-computed-proxy-busy-buffers-size: $(fn-nginx-path-computed-proxy-busy-buffers-size "$APP")"
+    "--nginx-path-global-proxy-busy-buffers-size: $(fn-nginx-path-global-proxy-busy-buffers-size "$APP")"
+    "--nginx-path-proxy-connect-timeout: $(fn-nginx-path-proxy-connect-timeout "$APP")"
+    "--nginx-path-computed-proxy-connect-timeout: $(fn-nginx-path-computed-proxy-connect-timeout "$APP")"
+    "--nginx-path-global-proxy-connect-timeout: $(fn-nginx-path-global-proxy-connect-timeout "$APP")"
+    "--nginx-path-proxy-read-timeout: $(fn-nginx-path-proxy-read-timeout "$APP")"
+    "--nginx-path-computed-proxy-read-timeout: $(fn-nginx-path-computed-proxy-read-timeout "$APP")"
+    "--nginx-path-global-proxy-read-timeout: $(fn-nginx-path-global-proxy-read-timeout "$APP")"
+    "--nginx-path-proxy-send-timeout: $(fn-nginx-path-proxy-send-timeout "$APP")"
+    "--nginx-path-computed-proxy-send-timeout: $(fn-nginx-path-computed-proxy-send-timeout "$APP")"
+    "--nginx-path-global-proxy-send-timeout: $(fn-nginx-path-global-proxy-send-timeout "$APP")"
+    "--nginx-path-send-timeout: $(fn-nginx-path-send-timeout "$APP")"
+    "--nginx-path-computed-send-timeout: $(fn-nginx-path-computed-send-timeout "$APP")"
+    "--nginx-path-global-send-timeout: $(fn-nginx-path-global-send-timeout "$APP")"
+    "--nginx-path-underscore-in-headers: $(fn-nginx-path-underscore-in-headers "$APP")"
+    "--nginx-path-computed-underscore-in-headers: $(fn-nginx-path-computed-underscore-in-headers "$APP")"
+    "--nginx-path-global-underscore-in-headers: $(fn-nginx-path-global-underscore-in-headers "$APP")"
+    "--nginx-path-x-forwarded-for-value: $(fn-nginx-path-x-forwarded-for-value "$APP")"
+    "--nginx-path-computed-x-forwarded-for-value: $(fn-nginx-path-computed-x-forwarded-for-value "$APP")"
+    "--nginx-path-global-x-forwarded-for-value: $(fn-nginx-path-global-x-forwarded-for-value "$APP")"
+    "--nginx-path-x-forwarded-port-value: $(fn-nginx-path-x-forwarded-port-value "$APP")"
+    "--nginx-path-computed-x-forwarded-port-value: $(fn-nginx-path-computed-x-forwarded-port-value "$APP")"
+    "--nginx-path-global-x-forwarded-port-value: $(fn-nginx-path-global-x-forwarded-port-value "$APP")"
+    "--nginx-path-x-forwarded-proto-value: $(fn-nginx-path-x-forwarded-proto-value "$APP")"
+    "--nginx-path-computed-x-forwarded-proto-value: $(fn-nginx-path-computed-x-forwarded-proto-value "$APP")"
+    "--nginx-path-global-x-forwarded-proto-value: $(fn-nginx-path-global-x-forwarded-proto-value "$APP")"
+    "--nginx-path-x-forwarded-ssl: $(fn-nginx-path-x-forwarded-ssl "$APP")"
+    "--nginx-path-computed-x-forwarded-ssl: $(fn-nginx-path-computed-x-forwarded-ssl "$APP")"
+    "--nginx-path-global-x-forwarded-ssl: $(fn-nginx-path-global-x-forwarded-ssl "$APP")"
+  )
+
+  if [[ -z "$INFO_FLAG" ]]; then
+    dokku_log_info2_quiet "${APP} nginx information"
+    for flag in "${flag_map[@]}"; do
+      key="$(echo "${flag#--}" | cut -f1 -d' ' | tr - ' ')"
+      dokku_log_verbose "$(printf "%-30s %-25s" "${key^}" "${flag#*: }")"
+    done
+  else
+    local match=false
+    local value_exists=false
+    for flag in "${flag_map[@]}"; do
+      valid_flags="${valid_flags} $(echo "$flag" | cut -d':' -f1)"
+      if [[ "$flag" == "${INFO_FLAG}:"* ]]; then
+        value=${flag#*: }
+        size="${#value}"
+        if [[ "$size" -ne 0 ]]; then
+          echo "$value" && match=true && value_exists=true
+        else
+          match=true
+        fi
+      fi
+    done
+    [[ "$match" == "true" ]] || dokku_log_fail "Invalid flag passed, valid flags:${valid_flags}"
+    [[ "$value_exists" == "true" ]] || dokku_log_fail "not deployed"
+  fi
+}
+
+cmd-nginx-path-show-config() {
+  declare desc="display app nginx config"
+  declare cmd="nginx-path:show-config"
+  [[ "$1" == "$cmd" ]] && shift 1
+  declare APP="$1"
+  local proxy_type
+
+  verify_app_name "$APP"
+  proxy_type="$(plugn trigger proxy-type "$APP")"
+
+  local DOKKU_SCHEDULER=$(get_app_scheduler "$APP")
+  if [[ "$DOKKU_SCHEDULER" != "docker-local" ]] && [[ "$DOKKU_SCHEDULER" != "null" ]]; then
+    plugn trigger scheduler-proxy-config "$DOKKU_SCHEDULER" "$APP" "$proxy_type"
+    return $?
+  fi
+
+  if [[ "$proxy_type" != "$PROXY_NAME" ]]; then
+    dokku_log_fail "This command is only available for apps with the nginx proxy type"
+  fi
+
+  if [[ ! -f "$DOKKU_ROOT/$APP/nginx.conf" ]]; then
+    dokku_log_fail "No nginx.conf exists for $APP"
+  fi
+
+  cat "$DOKKU_ROOT/$APP/nginx.conf"
+}
+
+# cmd-nginx-path-start() {
+#   declare desc="starts the nginx server"
+#   declare cmd="nginx-path:start"
+#   [[ "$1" == "$cmd" ]] && shift 1
+
+#   fn-plugin-property-write "nginx-path" "--global" "proxy-status" "started"
+#   fn-nginx-path-vhosts-nginx-path-init-cmd "enable"
+#   fn-nginx-path-vhosts-nginx-path-init-cmd "start"
+# }
+
+# cmd-nginx-path-stop() {
+#   declare desc="stops the nginx server"
+#   declare cmd="nginx-path:stop"
+#   [[ "$1" == "$cmd" ]] && shift 1
+
+#   fn-plugin-property-write "nginx-path" "--global" "proxy-status" "stopped"
+#   fn-nginx-path-vhosts-nginx-path-init-cmd "stop"
+#   fn-nginx-path-vhosts-nginx-path-init-cmd "disable"
+# }
+
+cmd-nginx-path-validate-config() {
+  declare desc="validates and optionally cleans up invalid nginx configurations"
+  declare cmd="nginx-path:validate-config"
+  [[ "$1" == "$cmd" ]] && shift 1
+  declare APP="$1" FLAG="$2"
+
+  validate_nginx "$APP" "$FLAG"
+}
