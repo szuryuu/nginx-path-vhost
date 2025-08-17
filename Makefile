@@ -13,7 +13,7 @@ clean-pagesize:
 	rm -rf pagesize
 
 pagesize: clean-pagesize **/**/pagesize.go
-	GOARCH=$(GOARCH) cd src/nginx-property && go build -ldflags="-s -w" $(GO_ARGS) -o ../../pagesize 
+    GOARCH=$(GOARCH) cd src/pagesize && go build -ldflags="-s -w" $(GO_ARGS) -o ../../pagesize
 
 clean-nginx-property:
 	rm -rf nginx-property
@@ -32,7 +32,7 @@ build-in-docker: clean
 		-e GO111MODULE=on \
 		-w /go/src/nginx-path-vhosts \
 		$(BUILD_IMAGE) \
-		bash -c "GO_ARGS='$(GO_ARGS)' CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) GOWORK=off make -j4 $(GO_PLUGIN_MAKE_TARGET)" || exit $$? 
+		bash -c "GO_ARGS='$(GO_ARGS)' CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) GOWORK=off make -j4 $(GO_PLUGIN_MAKE_TARGET)" || exit $$?
 
 clean:
 	rm -rf $(BUILD)
