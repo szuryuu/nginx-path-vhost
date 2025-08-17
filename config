@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-export PROXY_NAME="nginx-path-vhost"
+export PROXY_NAME="nginx-path-vhosts"
 export DATA_DIRECTORY="${DOKKU_LIB_ROOT}/data/$PROXY_NAME"
