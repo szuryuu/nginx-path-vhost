@@ -6,7 +6,6 @@ source "$_DIR/config"
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/functions"
 source "$PLUGIN_CORE_AVAILABLE_PATH/common/property-functions"
 
-
 fn-nginx-path-disable-custom-config() {
   declare desc="get the configured disable-custom-config value"
   declare APP="$1"
@@ -194,7 +193,7 @@ fn-nginx-path-computed-app-path() {
 
   local app_path=$(fn-get-property --app "$APP" --computed "app-path")
   if [[ -z "$app_path" ]]; then
-    echo "${APP}.${DOKKU_GLOBAL_DOMAIN:-dokku}"
+    echo "$APP"
   else
     echo "$app_path"
   fi
@@ -206,7 +205,7 @@ fn-nginx-path-computed-root-domain() {
 
   local root_domain=$(fn-get-property --app "$APP" --computed "root-domain")
   if [[ -z "$root_domain" ]]; then
-    echo "${APP}.${DOKKU_GLOBAL_DOMAIN:-dokku}"
+    echo "$APP"
   else
     echo "$root_domain"
   fi
@@ -218,8 +217,443 @@ fn-nginx-path-computed-default-app() {
 
   local default_app=$(fn-get-property --app "$APP" --computed "default-app")
   if [[ -z "$default_app" ]]; then
-    echo "${APP}.${DOKKU_GLOBAL_DOMAIN:-dokku}"
+    echo "$APP"
   else
     echo "$default_app"
   fi
+}
+
+fn-nginx-path-access-log-format() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "access-log-format"
+}
+
+fn-nginx-path-computed-access-log-format() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "access-log-format"
+}
+
+fn-nginx-path-global-access-log-format() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "access-log-format"
+}
+
+fn-nginx-path-access-log-path() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "access-log-path"
+}
+
+fn-nginx-path-computed-access-log-path() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "access-log-path"
+}
+
+fn-nginx-path-global-access-log-path() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "access-log-path"
+}
+
+fn-nginx-path-error-log-path() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "error-log-path"
+}
+
+fn-nginx-path-computed-error-log-path() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "error-log-path"
+}
+
+fn-nginx-path-global-error-log-path() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "error-log-path"
+}
+
+fn-nginx-path-bind-address-ipv4() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "bind-address-ipv4"
+}
+
+fn-nginx-path-computed-bind-address-ipv4() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "bind-address-ipv4"
+}
+
+fn-nginx-path-global-bind-address-ipv4() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "bind-address-ipv4"
+}
+
+fn-nginx-path-bind-address-ipv6() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "bind-address-ipv6"
+}
+
+fn-nginx-path-computed-bind-address-ipv6() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "bind-address-ipv6"
+}
+
+fn-nginx-path-global-bind-address-ipv6() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "bind-address-ipv6"
+}
+
+fn-nginx-path-client-body-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "client-body-timeout"
+}
+
+fn-nginx-path-computed-client-body-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "client-body-timeout"
+}
+
+fn-nginx-path-global-client-body-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "client-body-timeout"
+}
+
+fn-nginx-path-client-header-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "client-header-timeout"
+}
+
+fn-nginx-path-computed-client-header-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "client-header-timeout"
+}
+
+fn-nginx-path-global-client-header-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "client-header-timeout"
+}
+
+fn-nginx-path-client-max-body-size() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "client-max-body-size"
+}
+
+fn-nginx-path-computed-client-max-body-size() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "client-max-body-size"
+}
+
+fn-nginx-path-global-client-max-body-size() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "client-max-body-size"
+}
+
+fn-nginx-path-disable-custom-config() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "disable-custom-config"
+}
+
+fn-nginx-path-computed-disable-custom-config() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "disable-custom-config"
+}
+
+fn-nginx-path-global-disable-custom-config() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "disable-custom-config"
+}
+
+fn-nginx-path-hsts-include-subdomains() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "hsts-include-subdomains"
+}
+
+fn-nginx-path-computed-hsts-include-subdomains() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "hsts-include-subdomains"
+}
+
+fn-nginx-path-global-hsts-include-subdomains() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "hsts-include-subdomains"
+}
+
+fn-nginx-path-hsts-max-age() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "hsts-max-age"
+}
+
+fn-nginx-path-computed-hsts-max-age() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "hsts-max-age"
+}
+
+fn-nginx-path-global-hsts-max-age() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "hsts-max-age"
+}
+
+fn-nginx-path-hsts-preload() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "hsts-preload"
+}
+
+fn-nginx-path-computed-hsts-preload() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "hsts-preload"
+}
+
+fn-nginx-path-global-hsts-preload() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "hsts-preload"
+}
+
+fn-nginx-path-hsts() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "hsts"
+}
+
+fn-nginx-path-computed-hsts() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "hsts"
+}
+
+fn-nginx-path-global-hsts() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "hsts"
+}
+
+fn-nginx-path-keepalive-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "keepalive-timeout"
+}
+
+fn-nginx-path-computed-keepalive-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "keepalive-timeout"
+}
+
+fn-nginx-path-global-keepalive-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "keepalive-timeout"
+}
+
+fn-nginx-path-lingering-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "lingering-timeout"
+}
+
+fn-nginx-path-computed-lingering-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "lingering-timeout"
+}
+
+fn-nginx-path-global-lingering-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "lingering-timeout"
+}
+
+fn-nginx-path-nginx-path-location-conf-sigil-path() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "nginx-path-location-conf-sigil-path"
+}
+
+fn-nginx-path-computed-nginx-path-location-conf-sigil-path() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "nginx-path-location-conf-sigil-path"
+}
+
+fn-nginx-path-global-nginx-path-location-conf-sigil-path() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "nginx-path-location-conf-sigil-path"
+}
+
+fn-nginx-path-proxy-buffer-size() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "proxy-buffer-size"
+}
+
+fn-nginx-path-computed-proxy-buffer-size() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "proxy-buffer-size"
+}
+
+fn-nginx-path-global-proxy-buffer-size() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "proxy-buffer-size"
+}
+
+fn-nginx-path-proxy-buffering() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "proxy-buffering"
+}
+
+fn-nginx-path-computed-proxy-buffering() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "proxy-buffering"
+}
+
+fn-nginx-path-global-proxy-buffering() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "proxy-buffering"
+}
+
+fn-nginx-path-proxy-buffers() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "proxy-buffers"
+}
+
+fn-nginx-path-computed-proxy-buffers() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "proxy-buffers"
+}
+
+fn-nginx-path-global-proxy-buffers() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "proxy-buffers"
+}
+
+fn-nginx-path-proxy-busy-buffers-size() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "proxy-busy-buffers-size"
+}
+
+fn-nginx-path-computed-proxy-busy-buffers-size() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "proxy-busy-buffers-size"
+}
+
+fn-nginx-path-global-proxy-busy-buffers-size() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "proxy-busy-buffers-size"
+}
+
+fn-nginx-path-proxy-connect-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "proxy-connect-timeout"
+}
+
+fn-nginx-path-computed-proxy-connect-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "proxy-connect-timeout"
+}
+
+fn-nginx-path-global-proxy-connect-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "proxy-connect-timeout"
+}
+
+fn-nginx-path-proxy-read-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "proxy-read-timeout"
+}
+
+fn-nginx-path-computed-proxy-read-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "proxy-read-timeout"
+}
+
+fn-nginx-path-global-proxy-read-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "proxy-read-timeout"
+}
+
+fn-nginx-path-proxy-send-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "proxy-send-timeout"
+}
+
+fn-nginx-path-computed-proxy-send-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "proxy-send-timeout"
+}
+
+fn-nginx-path-global-proxy-send-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "proxy-send-timeout"
+}
+
+fn-nginx-path-send-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "send-timeout"
+}
+
+fn-nginx-path-computed-send-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "send-timeout"
+}
+
+fn-nginx-path-global-send-timeout() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "send-timeout"
+}
+
+fn-nginx-path-underscore-in-headers() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "underscore-in-headers"
+}
+
+fn-nginx-path-computed-underscore-in-headers() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "underscore-in-headers"
+}
+
+fn-nginx-path-global-underscore-in-headers() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "underscore-in-headers"
+}
+
+fn-nginx-path-x-forwarded-for-value() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "x-forwarded-for-value"
+}
+
+fn-nginx-path-computed-x-forwarded-for-value() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "x-forwarded-for-value"
+}
+
+fn-nginx-path-global-x-forwarded-for-value() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "x-forwarded-for-value"
+}
+
+fn-nginx-path-x-forwarded-port-value() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "x-forwarded-port-value"
+}
+
+fn-nginx-path-computed-x-forwarded-port-value() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "x-forwarded-port-value"
+}
+
+fn-nginx-path-global-x-forwarded-port-value() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "x-forwarded-port-value"
+}
+
+fn-nginx-path-x-forwarded-proto-value() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "x-forwarded-proto-value"
+}
+
+fn-nginx-path-computed-x-forwarded-proto-value() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "x-forwarded-proto-value"
+}
+
+fn-nginx-path-global-x-forwarded-proto-value() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "x-forwarded-proto-value"
+}
+
+fn-nginx-path-x-forwarded-ssl() {
+  declare APP="$1"
+  fn-get-property --app "$APP" "x-forwarded-ssl"
+}
+
+fn-nginx-path-computed-x-forwarded-ssl() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --computed "x-forwarded-ssl"
+}
+
+fn-nginx-path-global-x-forwarded-ssl() {
+  declare APP="$1"
+  fn-get-property --app "$APP" --global "x-forwarded-ssl"
 }
