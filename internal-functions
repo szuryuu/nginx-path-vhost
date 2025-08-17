@@ -50,14 +50,15 @@ fn-nginx-path-sigil() {
   declare desc="get nginx config sigil path for different block types"
   declare TYPE="$1" SCOPE="$2" APP="$3" DOMAIN="${4:-}"
   local orig_property_name="nginx-conf-${TYPE}-sigil-path"
-  local property_name="$orig_property_name"
+
+  local property_name="${orig_property_name}-${APP}"
   [[ -n "$DOMAIN" ]] && property_name="${property_name}-${DOMAIN}"
-  
+
   case "$SCOPE" in
     computed)
       result=$(fn-get-property --computed --app "$APP" "$property_name")
       if [[ -z "$result" ]]; then
-        result=$(fn-get-property --computed --app "$APP" "$orig_property_name") 
+        result=$(fn-get-property --computed --app "$APP" "$orig_property_name")
       fi
       ;;
   esac
@@ -169,6 +170,7 @@ nginx_vhosts_is_valid_nginx_config_func() {
   fi
 
   sigil -f "$VALIDATE_TEMPLATE" NGINX_CONF="$DOKKU_ROOT/$APP/nginx.conf" | cat -s >"$TMP_OUTPUT"
+  local NGINX_LOCATION=$(fn-nginx-path-vhosts-nginx-location)
   sudo "$NGINX_LOCATION" -t -c "$TMP_OUTPUT" 2>/dev/null
 }
 
@@ -184,4 +186,40 @@ nginx_clear_config() {
   declare APP="$1"
   rm -f "$DOKKU_ROOT/$APP/nginx.conf"
   suppress_output fn-nginx-path-vhosts-nginx-path-init-cmd "reload"
+}
+
+fn-nginx-path-computed-app-path() {
+  declare desc="get the computed app-path value"
+  declare APP="$1"
+
+  local app_path=$(fn-get-property --app "$APP" --computed "app-path")
+  if [[ -z "$app_path" ]]; then
+    echo "${APP}.${DOKKU_GLOBAL_DOMAIN:-dokku}"
+  else
+    echo "$app_path"
+  fi
+}
+
+fn-nginx-path-computed-root-domain() {
+  declare desc="get the computed root domain value"
+  declare APP="$1"
+
+  local root_domain=$(fn-get-property --app "$APP" --computed "root-domain")
+  if [[ -z "$root_domain" ]]; then
+    echo "${APP}.${DOKKU_GLOBAL_DOMAIN:-dokku}"
+  else
+    echo "$root_domain"
+  fi
+}
+
+fn-nginx-path-computed-default-app() {
+  declare desc="get the computed default app value"
+  declare APP="$1"
+
+  local default_app=$(fn-get-property --app "$APP" --computed "default-app")
+  if [[ -z "$default_app" ]]; then
+    echo "${APP}.${DOKKU_GLOBAL_DOMAIN:-dokku}"
+  else
+    echo "$default_app"
+  fi
 }

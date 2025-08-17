@@ -25,7 +25,14 @@ server {
     return 301 https://$host:{{ $.PROXY_SSL_PORT }}$request_uri;
   }
 {{ else }}
-  location    / {
+
+{{ $app_path := $.APP_PATH | default $.APP }}
+location /{{ $app_path }}/ {
+
+    {{ if eq $.STRIP_PATH "true" }}
+    rewrite ^/{{ $app_path }}/(.*) /$1 break;
+    {{ else }}
+    {{ end }}
 
     gzip on;
     gzip_min_length  1100;
@@ -34,7 +41,7 @@ server {
     gzip_vary on;
     gzip_comp_level  6;
 
-    proxy_pass  http://{{ $.APP }}-{{ $upstream_port }};
+    proxy_pass  http://{{ $.APP }}-{{ $upstream_port }}/;
     proxy_http_version 1.1;
     {{ if $.PROXY_CONNECT_TIMEOUT }}proxy_connect_timeout {{ $.PROXY_CONNECT_TIMEOUT }};{{end}}
     {{ if $.PROXY_READ_TIMEOUT }}proxy_read_timeout {{ $.PROXY_READ_TIMEOUT }};{{end}}
@@ -50,8 +57,16 @@ server {
     proxy_set_header X-Forwarded-Port {{ $.PROXY_X_FORWARDED_PORT }};
     proxy_set_header X-Forwarded-Proto {{ $.PROXY_X_FORWARDED_PROTO }};
     proxy_set_header X-Request-Start $msec;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Prefix /{{ $app_path }}/;
     {{ if $.PROXY_X_FORWARDED_SSL }}proxy_set_header X-Forwarded-Ssl {{ $.PROXY_X_FORWARDED_SSL }};{{ end }}
   }
+
+  location = /{{ $app_path }} {
+    return 301 $scheme://$host/{{ $app_path }}/;
+  }
+
+  include {{ $.DOKKU_ROOT }}/{{ $.APP }}/nginx.conf.d/*.conf;
 
   {{ if $.CLIENT_MAX_BODY_SIZE }}client_max_body_size {{ $.CLIENT_MAX_BODY_SIZE }};{{ end }}
 
@@ -72,7 +87,6 @@ server {
     root {{ $.DOKKU_LIB_ROOT }}/data/nginx-path-vhosts/dokku-errors;
     internal;
   }
-  include {{ $.DOKKU_ROOT }}/{{ $.APP }}/nginx.conf.d/*.conf;
 {{ end }}
 }
 {{ else if eq $scheme "https"}}
@@ -96,7 +110,11 @@ server {
   {{ if $.LINGERING_TIMEOUT }}lingering_timeout {{ $.LINGERING_TIMEOUT }};{{end}}
   {{ if $.SEND_TIMEOUT }}send_timeout {{ $.SEND_TIMEOUT }};{{end}}
 
-  location    / {
+{{ $app_path := $.APP_PATH | default $.APP }}
+location /{{ $app_path }}/ {
+    {{ if eq $.STRIP_PATH "true" }}
+    rewrite ^/{{ $app_path }}/(.*) /$1 break;
+    {{ end }}
 
     gzip on;
     gzip_min_length  1100;
@@ -105,7 +123,7 @@ server {
     gzip_vary on;
     gzip_comp_level  6;
 
-    proxy_pass  http://{{ $.APP }}-{{ $upstream_port }};
+    proxy_pass  http://{{ $.APP }}-{{ $upstream_port }}/;
     {{ if eq $.HTTP2_PUSH_SUPPORTED "true" }}http2_push_preload on; {{ end }}
     proxy_http_version 1.1;
     {{ if $.PROXY_CONNECT_TIMEOUT }}proxy_connect_timeout {{ $.PROXY_CONNECT_TIMEOUT }};{{end}}
@@ -122,7 +140,13 @@ server {
     proxy_set_header X-Forwarded-Port {{ $.PROXY_X_FORWARDED_PORT }};
     proxy_set_header X-Forwarded-Proto {{ $.PROXY_X_FORWARDED_PROTO }};
     proxy_set_header X-Request-Start $msec;
+    proxy_set_header X-Forwarded-Host $host;
+    proxy_set_header X-Forwarded-Prefix /{{ $app_path }}/;
     {{ if $.PROXY_X_FORWARDED_SSL }}proxy_set_header X-Forwarded-Ssl {{ $.PROXY_X_FORWARDED_SSL }};{{ end }}
+}
+
+  location = /{{ $app_path }} {
+    return 301 $scheme://$host/{{ $app_path }}/;
   }
 
   {{ if $.CLIENT_MAX_BODY_SIZE }}client_max_body_size {{ $.CLIENT_MAX_BODY_SIZE }};{{ end }}
@@ -152,23 +176,6 @@ server {
   }
   include {{ $.DOKKU_ROOT }}/{{ $.APP }}/nginx.conf.d/*.conf;
 }
-{{ else if eq $scheme "grpc"}}
-{{ if eq $.GRPC_SUPPORTED "true"}}{{ if eq $.HTTP2_SUPPORTED "true"}}
-server {
-  listen      [{{ $.NGINX_BIND_ADDRESS_IP6 }}]:{{ $listen_port }} http2;
-  listen      {{ if $.NGINX_BIND_ADDRESS_IP4 }}{{ $.NGINX_BIND_ADDRESS_IP4 }}:{{end}}{{ $listen_port }} http2;
-  {{ if $.NOSSL_SERVER_NAME }}server_name {{ $.NOSSL_SERVER_NAME }}; {{ end }}
-  access_log  {{ $.NGINX_ACCESS_LOG_PATH }}{{ if and ($.NGINX_ACCESS_LOG_FORMAT) (ne $.NGINX_ACCESS_LOG_PATH "off") }} {{ $.NGINX_ACCESS_LOG_FORMAT }}{{ end }};
-  error_log   {{ $.NGINX_ERROR_LOG_PATH }};
-  underscores_in_headers {{ $.NGINX_UNDERSCORE_IN_HEADERS }};
-  location    / {
-    grpc_pass  grpc://{{ $.APP }}-{{ $upstream_port }};
-  }
-
-  {{ if $.CLIENT_MAX_BODY_SIZE }}client_max_body_size {{ $.CLIENT_MAX_BODY_SIZE }};{{ end }}
-  include {{ $.DOKKU_ROOT }}/{{ $.APP }}/nginx.conf.d/*.conf;
-}
-{{ end }}{{ end }}
 {{ else if eq $scheme "grpcs"}}
 {{ if eq $.GRPC_SUPPORTED "true"}}{{ if eq $.HTTP2_SUPPORTED "true"}}
 server {

@@ -30,6 +30,10 @@ var propertyConfigs = map[string]PropertyConfig{
 	"keepalive-timeout":       {"keepalive-timeout", "75s", false},
 	"lingering-timeout":       {"lingering-timeout", "5s", false},
 
+	"app-path":    {"app-path", "", true},
+	"root-domain": {"root-domain", "", true},
+	"default-app": {"default-app", "", true},
+
 	"nginx-conf-location-sigil-path":     {"nginx-conf-location-sigil-path", "location.conf.sigil", false},
 	"nginx-conf-upstream-sigil-path":     {"nginx-conf-upstream-sigil-path", "upstream.conf.sigil", false},
 	"nginx-conf-server-block-sigil-path": {"nginx-conf-server-block-sigil-path", "server-block.conf.sigil", false},
@@ -55,7 +59,7 @@ var wildcardProperties = map[string]PropertyConfig{
 	"nginx-conf-http-block-sigil-path-*":   {"", "", false},
 }
 
-func isPropertyExists(property string) (PropertyConfig, bool) {
+func lookupProperty(property string) (PropertyConfig, bool) {
 	for wildcardProperty, prop := range wildcardProperties {
 		if strings.HasPrefix(property, strings.Trim(wildcardProperty, "*")) {
 			prop.Name = property
@@ -69,28 +73,28 @@ func isPropertyExists(property string) (PropertyConfig, bool) {
 
 // Generic property getters
 func GetAppProperty(appName string, property PropertyConfig) string {
-	return common.PropertyGet(os.Getenv("PROXY_NAME"), appName, property.Name)
+	return common.PropertyGet(getProxyName(), appName, property.Name)
 }
 
-func GetComputedProperty(appName string, property string) string {
-	prop, exists := isPropertyExists(property)
+func GetComputedProperty(appName string, property string) (string, bool) {
+	prop, exists := lookupProperty(property)
 	if !exists {
-		return ""
+		return "", false
 	}
 
 	appValue := GetAppProperty(appName, prop)
 	if appValue != "" {
-		return appValue
+		return appValue, true
 	}
 
-	return GetGlobalProperty(appName, prop)
+	return GetGlobalProperty(appName, prop), true
 }
 
 func GetGlobalProperty(appName string, property PropertyConfig) string {
 	if property.UsesAppName {
-		return common.PropertyGetDefault(os.Getenv("PROXY_NAME"), "--global", property.Name, getDefaultValue(property, appName))
+		return common.PropertyGetDefault(getProxyName(), "--global", property.Name, getDefaultValue(property, appName))
 	}
-	return common.PropertyGetDefault(os.Getenv("PROXY_NAME"), "--global", property.Name, property.DefaultValue)
+	return common.PropertyGetDefault(getProxyName(), "--global", property.Name, property.DefaultValue)
 }
 
 func getDefaultValue(config PropertyConfig, appName string) string {
@@ -102,4 +106,11 @@ func getDefaultValue(config PropertyConfig, appName string) string {
 	default:
 		return config.DefaultValue
 	}
+}
+
+func getProxyName() string {
+	if v := os.Getenv("PROXY_NAME"); v != "" {
+		return v
+	}
+	return "nginx"
 }
