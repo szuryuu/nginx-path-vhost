@@ -76,18 +76,18 @@ func GetAppProperty(appName string, property PropertyConfig) string {
 	return common.PropertyGet(getProxyName(), appName, property.Name)
 }
 
-func GetComputedProperty(appName string, property string) (string, bool) {
+func GetComputedProperty(appName string, property string) string {
 	prop, exists := lookupProperty(property)
 	if !exists {
-		return "", false
+		return ""
 	}
 
 	appValue := GetAppProperty(appName, prop)
 	if appValue != "" {
-		return appValue, true
+		return appValue
 	}
 
-	return GetGlobalProperty(appName, prop), true
+	return GetGlobalProperty(appName, prop)
 }
 
 func GetGlobalProperty(appName string, property PropertyConfig) string {
