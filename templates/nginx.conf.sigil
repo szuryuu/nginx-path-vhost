@@ -39,8 +39,6 @@ location /{{ $app_path }}/ {
     proxy_pass http://{{ $.APP }}-{{ $upstream_port }}/;
     {{ end }}
 
-    proxy_pass  http://{{ $.APP }}-{{ $upstream_port }}/;
-
     gzip on;
     gzip_min_length  1100;
     gzip_buffers  4 32k;
