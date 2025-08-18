@@ -6,7 +6,7 @@
 
 {{ if eq $scheme "http" }}
 server {
-  listen      [{{ $.NGINX_BIND_ADDRESS_IP6 }}]:{{ $listen_port }};
+  listen      [{{ $.NGINX_BIND_ADDRESS_IP6 | default "::1" }}]:{{ $listen_port }};
   listen      {{ if $.NGINX_BIND_ADDRESS_IP4 }}{{ $.NGINX_BIND_ADDRESS_IP4 }}:{{end}}{{ $listen_port }};
   server_name {{ $.ROOT_DOMAIN }};
   {{ if $.NOSSL_SERVER_NAME }}server_name {{ $.NOSSL_SERVER_NAME }}; {{ end }}

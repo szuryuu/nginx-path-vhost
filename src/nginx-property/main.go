@@ -11,16 +11,17 @@ import (
 func main() {
 	args := flag.NewFlagSet("ps:inspect", flag.ExitOnError)
 	appName := args.String("app", "", "app: the app to inspect")
-	_ = args.Bool("global", false, "global: inspect global property")
+	isGlobal := args.Bool("global", false, "global: inspect global property")
 	_ = args.Bool("computed", false, "computed: inspect computed property")
 	logRoot := args.String("log-root", "", "log-root: log root directory")
+
 	err := args.Parse(os.Args[1:])
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	if *appName == "" {
-		log.Fatalln("app is required")
+	if !*isGlobal && *appName == "" {
+		log.Fatalln("app is required unless --global is set")
 	}
 
 	if *logRoot == "" {
