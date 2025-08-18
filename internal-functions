@@ -657,3 +657,81 @@ fn-nginx-path-global-x-forwarded-ssl() {
   declare APP="$1"
   fn-get-property --app "$APP" --global "x-forwarded-ssl"
 }
+
+fn-nginx-path-vhosts-nginx-path-init-cmd() {
+  declare desc="executes nginx init cmd if available"
+  declare CMD="$1"
+  local NGINX_INIT_NAME="nginx"
+
+  if fn-nginx-path-vhosts-uses-openresty; then
+    NGINX_INIT_NAME="openresty"
+  fi
+
+  case "$DOKKU_DISTRO" in
+    debian | ubuntu)
+      if [[ -x /bin/systemctl ]] || [[ -x /usr/bin/systemctl ]]; then
+        local systemctl_path="/bin/systemctl"
+        [[ -x /usr/bin/systemctl ]] && systemctl_path="/usr/bin/systemctl"
+        sudo "$systemctl_path" "$CMD" "$NGINX_INIT_NAME"
+      else
+        sudo "/etc/init.d/$NGINX_INIT_NAME" "$CMD"
+      fi
+      ;;
+    arch)
+      sudo systemctl "$CMD" "$NGINX_INIT_NAME"
+      ;;
+  esac
+}
+
+fn-nginx-path-vhosts-nginx-path-location() {
+  declare desc="check that nginx is at the expected location and return it"
+  fn-nginx-path-vhosts-nginx-location
+}
+
+fn-nginx-path-vhosts-nginx-path-is-running() {
+  declare desc="check if nginx is running"
+  local NGINX_INIT_NAME="nginx"
+
+  if fn-nginx-path-vhosts-uses-openresty; then
+    NGINX_INIT_NAME="openresty"
+  fi
+
+  case "$DOKKU_DISTRO" in
+    debian | ubuntu)
+      if [[ -x /bin/systemctl ]] || [[ -x /usr/bin/systemctl ]]; then
+        local systemctl_path="/bin/systemctl"
+        [[ -x /usr/bin/systemctl ]] && systemctl_path="/usr/bin/systemctl"
+        sudo "$systemctl_path" is-active --quiet "$NGINX_INIT_NAME" 2>/dev/null
+      else
+        sudo service "$NGINX_INIT_NAME" status >/dev/null 2>&1
+      fi
+      ;;
+    arch)
+      sudo systemctl is-active --quiet "$NGINX_INIT_NAME" 2>/dev/null
+      ;;
+  esac
+}
+
+fn-nginx-path-vhosts-manage-hsts() {
+  declare desc="manages hsts for nginx"
+  declare APP="$1" SSL_INUSE="$2"
+  local HSTS_COMPUTED_CONF="$(plugn trigger nginx-path-computed-hsts "$APP")"
+
+  if [[ "$SSL_INUSE" == "true" ]] && [[ "$HSTS_COMPUTED_CONF" == "true" ]]; then
+    local HSTS_MAX_AGE="$(fn-nginx-path-computed-hsts-max-age "$APP")"
+    local HSTS_INCLUDE_SUBDOMAINS="$(fn-nginx-path-computed-hsts-include-subdomains "$APP")"
+    local HSTS_PRELOAD="$(fn-nginx-path-computed-hsts-preload "$APP")"
+
+    local HSTS_HEADERS="max-age=$HSTS_MAX_AGE"
+    [[ "$HSTS_INCLUDE_SUBDOMAINS" == "true" ]] && HSTS_HEADERS="$HSTS_HEADERS; includeSubDomains"
+    [[ "$HSTS_PRELOAD" == "true" ]] && HSTS_HEADERS="$HSTS_HEADERS; preload"
+
+    local NGINX_TEMPLATE="$_DIR/templates/hsts.conf.sigil"
+    local NGINX_CONF="$DOKKU_ROOT/$APP/nginx.conf.d/hsts.conf"
+
+    mkdir -p "$DOKKU_ROOT/$APP/nginx.conf.d"
+    sigil -f "$NGINX_TEMPLATE" HSTS_HEADERS="$HSTS_HEADERS" > "$NGINX_CONF"
+  else
+    rm -f "$DOKKU_ROOT/$APP/nginx.conf.d/hsts.conf"
+  fi
+}
