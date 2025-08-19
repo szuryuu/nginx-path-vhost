@@ -7,20 +7,20 @@ set -eo pipefail
 [[ $DOKKU_TRACE ]] && set -x
 
 fn-nginx-path-vhosts-copy-from-image() {
-  declare APP="$1" IMAGE_NAME="$2" CONF_SIGIL_PATH="$3" DOMAIN="$4" CONF_SCOPE="$5" 
+  declare APP="$1" IMAGE_NAME="$2" CONF_SIGIL_PATH="$3" DOMAIN="$4" CONF_SCOPE="$5"
 
   conf_dest_path_base_dir="${DATA_DIRECTORY}/app-$APP/"
-  
+
   mkdir -p "$conf_dest_path_base_dir"
 
   conf_dest_path_filename_prefix="nginx-$CONF_SCOPE.$DOMAIN.conf.sigil"
   conf_dest_path_with_pid="$conf_dest_path_base_dir/$conf_dest_path_filename_prefix.$DOKKU_PID"
   conf_dest_missing_path="$conf_dest_path_with_pid.missing"
 
-  find "$conf_dest_path_base_dir" -maxdepth 1 -type f -name "$conf_dest_path_filename_prefix.*" -delete 
-  copy_from_image "$IMAGE_NAME" "$CONF_SIGIL_PATH" "$conf_dest_path_with_pid" 2>/dev/null || true 
+  find "$conf_dest_path_base_dir" -maxdepth 1 -type f -name "$conf_dest_path_filename_prefix.*" -delete
+  copy_from_image "$IMAGE_NAME" "$CONF_SIGIL_PATH" "$conf_dest_path_with_pid" 2>/dev/null || true
 
-  find "$conf_dest_path_base_dir" -maxdepth 1 -type f -name "$conf_dest_path_filename_prefix.*" -delete 
+  find "$conf_dest_path_base_dir" -maxdepth 1 -type f -name "$conf_dest_path_filename_prefix.*" -delete
   if [[ -z "$CONF_SIGIL_PATH" ]] || [[ ! -f "$CONF_SIGIL_PATH" ]]; then
     touch "$conf_dest_missing_path"
     return
@@ -29,7 +29,7 @@ fn-nginx-path-vhosts-copy-from-image() {
 
 fn-nginx-path-vhosts-copy-from-directory() {
   set -x
-  declare APP="$1" SOURCECODE_WORK_DIR="$2" CONF_SIGIL_PATH="$3" DOMAIN="$4" CONF_SCOPE="$5" 
+  declare APP="$1" SOURCECODE_WORK_DIR="$2" CONF_SIGIL_PATH="$3" DOMAIN="$4" CONF_SCOPE="$5"
 
   conf_dest_path_base_dir="${DATA_DIRECTORY}/app-$APP/"
 
@@ -45,7 +45,7 @@ fn-nginx-path-vhosts-copy-from-directory() {
     return
   fi
 
-  find "$conf_dest_path_base_dir" -maxdepth 1 -type f -name "$conf_dest_path_filename_prefix.*" -delete 
+  find "$conf_dest_path_base_dir" -maxdepth 1 -type f -name "$conf_dest_path_filename_prefix.*" -delete
   cp -f "$CONF_SIGIL_PATH" "$conf_dest_path_with_pid"
   popd &>/dev/null || pushd "/tmp" >/dev/null
 }
@@ -57,12 +57,12 @@ trigger-nginx-path-vhosts-post-extract() {
   local app_source_image
 
   app_source_image="$(plugn trigger git-get-property "$APP" "source-image")"
-  
+
   local domains=$(plugn trigger domains-list "$APP")
 
   for domain in $domains; do
     local CONF_SIGIL_PATHS=(
-      "location:$(fn-nginx-path-computed_nginx-conf-location-sigil-path "$APP" "$domain")"
+      "location:$(fn-nginx-path-computed-nginx-conf-location-sigil-path "$APP" "$domain")"
       "server-block:$(fn-nginx-path-computed_nginx-conf-server-block-sigil-path "$APP" "$domain")"
       "http-block:$(fn-nginx-path-computed_nginx-conf-http-block-sigil-path "$APP" "$domain")"
     )
