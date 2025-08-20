@@ -219,12 +219,7 @@ fn-nginx-path-computed-default-app() {
       dokku_log_fail "App name is required for fn-nginx-path-computed-default-app"
   fi
 
-  local default_app=$(fn-get-property --app "$APP" --computed "default-app")
-  if [[ -z "$default_app" ]]; then
-    echo "$APP"
-  else
-    echo "$default_app"
-  fi
+  fn-get-property --app "$APP" --computed "default-app"
 }
 
 fn-nginx-path-access-log-format() {
