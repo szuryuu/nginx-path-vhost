@@ -22,6 +22,8 @@ trigger-nginx-path-vhosts-proxy-build-config() {
 
     nginx_build_config "$APP"
 
+    mkdir -p "${DATA_DIRECTORY}/app-$APP/"
+
     # if [[ -f "${DOKKU_LIB_ROOT}/data/$PROXY_NAME/app-$APP/nginx.conf.sigil.$DOKKU_PID" ]]; then
     #   mv "${DOKKU_LIB_ROOT}/data/$PROXY_NAME/app-$APP/nginx.conf.sigil.$DOKKU_PID" "${DOKKU_LIB_ROOT}/data/$PROXY_NAME/app-$APP/nginx.conf.sigil"
     # fi
