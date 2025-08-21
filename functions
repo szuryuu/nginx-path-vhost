@@ -75,7 +75,7 @@ nginx_logs() {
   elif [[ "$CMD" == *"error-logs"* ]]; then
     log_type="error"
   else
-    dokku_log_fail "Tipe log tidak diketahui."
+    dokku_log_fail "Unknown log type"
     return 1
   fi
 
