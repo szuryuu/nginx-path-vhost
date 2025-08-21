@@ -70,8 +70,17 @@ nginx_logs() {
   declare NGINX_LOGS_TYPE="${1#nginx-path:}" APP="$2"
   local proxy_type
 
-  local NGINX_LOGS_TYPE=${NGINX_LOGS_TYPE%-logs}
-  local NGINX_LOGS_PATH="$("fn-nginx-path-computed-${NGINX_LOGS_TYPE}-log-path" "$APP")"
+  if [[ "$CMD" == *"access-logs"* ]]; then
+    log_type="access"
+  elif [[ "$CMD" == *"error-logs"* ]]; then
+    log_type="error"
+  else
+    dokku_log_fail "Tipe log tidak diketahui."
+    return 1
+  fi
+
+  local NGINX_LOGS_PATH
+  NGINX_LOGS_PATH=$(fn-nginx-path-computed-${log_type}-log-path "$APP")
 
   if [[ "$NGINX_LOGS_PATH" == "off" ]] || [[ "$NGINX_LOGS_PATH" == "/dev/null" ]]; then
     dokku_log_fail "$NGINX_LOGS_TYPE logs are disabled for this app"
