@@ -20,8 +20,6 @@ This plugin automates the NGINX configuration, including the creation of server 
 sudo dokku plugin:install [https://github.com/szuryuu/nginx-path-vhost.git](https://github.com/szuryuu/nginx-path-vhost.git) nginx-path-vhost
 ```
 
----
-
 ## Example Workflow
 
 Here is a step-by-step example of how to set up two apps, `main-app` and `api-app`, to be served under `example.com`.
@@ -64,8 +62,6 @@ dokku proxy:build-config main-app
 ```
 
 Your applications should now be accessible at their configured paths.
-
----
 
 ## Commands
 
