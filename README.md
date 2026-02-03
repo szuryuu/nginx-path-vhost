@@ -4,6 +4,8 @@ A Dokku plugin that allows multiple applications to be served under a single dom
 
 This plugin automates the NGINX configuration, including the creation of server blocks and upstream definitions for path-based routing. It centrally manages the configuration through a designated "default app" for each root domain.
 
+---
+
 ## Features
 
 -   **Path-Based Routing**: Host multiple Dokku apps on one domain.
@@ -109,3 +111,8 @@ dokku nginx-path-vhosts:set --global proxy-read-timeout 120s
 ```
 
 For a full list of configurable properties, see the `src/nginx-property/nginx_vhosts.go` file in this repository.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
